@@ -1,6 +1,11 @@
 package routes
 
 import (
+	"html/template"
+	"net/http"
+	"os"
+	"strings"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -12,9 +17,13 @@ type User struct {
 
 func SetupRoutes(app *fiber.App) {
 
+	var renderer = Renderer()
+
 	app.Get("/", handlerInicio)
 	app.Get("/about", handlerAbout)
 	app.Get("/saludo/:nombre", handlerSaludar)
+
+	app.Get("/:page", dynamicPagesHandler(renderer))
 
 	app.Get("/saludo/:nombre", func(c *fiber.Ctx) error {
 		var nombre = c.Params("nombre")
@@ -28,6 +37,23 @@ func SetupRoutes(app *fiber.App) {
 		}
 		return c.JSON(usuario)
 	})
+}
+
+func Renderer() *template.Template {
+	return template.Must(template.ParseGlob("views/*html"))
+}
+
+func dynamicPagesHandler(_ *template.Template) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var page = c.Params("page")
+		if strings.HasSuffix(page, ".html") {
+			page = strings.TrimSuffix(page, ".html")
+		}
+		if _, err := os.Stat("views/" + page + ".html"); err == nil {
+			return c.Render(page, nil)
+		}
+		return c.Status(http.StatusNotFound).SendString("Pagina no encontrada")
+	}
 }
 
 func handlerInicio(c *fiber.Ctx) error {
