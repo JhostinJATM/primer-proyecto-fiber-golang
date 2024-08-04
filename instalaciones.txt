@@ -1,0 +1,4 @@
+-------------INSTALACIONES-------------
+
+go get -u github.com/gofiber/fiber/v2
+go get -u github.com/gofiber/template/html/v2
